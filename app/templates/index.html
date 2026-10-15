@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- =======================================================================
+         Menu de Guias Superior (Simples, Limpo e Objetivo)
+         ======================================================================= -->
+    <div class="menu-tabs-bar">
+        <div class="menu-tabs">
+            <button type="button" id="tabVarreduraBtn" class="menu-tab-btn active">
+                <span class="tab-icon">🔍</span>
+                <span>Varredura</span>
+            </button>
+            <button type="button" id="tabStatusBtn" class="menu-tab-btn">
+                <span class="tab-icon">⚡</span>
+                <span>Status da varredura</span>
+                <span id="statusLiveIndicator" class="live-dot hidden"></span>
+            </button>
+            <button type="button" id="tabHistoricoBtn" class="menu-tab-btn">
+                <span class="tab-icon">📑</span>
+                <span>Histórico</span>
+                <span id="historyCountBadge" class="tab-counter-badge">0</span>
+            </button>
+        </div>
+
+        <div id="historyActionWrapper" class="hidden">
+            <button type="button" id="clearHistoryBtn" class="btn-secondary" title="Limpar histórico de varreduras">
+                <span>🧹</span> Limpar Histórico
+            </button>
+        </div>
+    </div>
+
+    <!-- =======================================================================
+         GUIA 1: VARREDURA (Configuração e Disparo)
+         ======================================================================= -->
+    <div id="tabVarreduraContent" class="space-y-6">
+        <div class="card">
+            <div class="card-header-clean">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <span>🔍</span> Configurar Nova Varredura
+                </h3>
+                <p class="text-xs text-muted">Informe os dados da aplicação web para iniciar a busca por segredos e credenciais expostas.</p>
+            </div>
+
+            <form id="scanForm" class="space-y-5" style="margin-top: 1.25rem;">
+                <!-- URL Alvo -->
+                <div>
+                    <label for="targetUrlInput" class="form-label">
+                        URL Alvo da Aplicação <span class="text-rose">*</span>
+                    </label>
+                    <div class="search-input-wrapper">
+                        <span class="search-input-icon">🌐</span>
+                        <input
+                            type="url"
+                            id="targetUrlInput"
+                            name="target_url"
+                            required
+                            placeholder="ex: http://192.168.0.50:8080 ou https://app.empresa.local"
+                            class="search-input font-mono"
+                        >
+                    </div>
+                    <p class="form-hint">O Playwright visitará a URL, renderizará o DOM e interceptará o tráfego de rede (XHR/Fetch).</p>
+                </div>
+
+                <!-- Parâmetros de Navegação -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="maxDepthInput" class="form-label">Profundidade de Links</label>
+                        <select id="maxDepthInput" name="max_depth" class="form-select">
+                            <option value="1">1 Nível (Apenas a página inicial informada)</option>
+                            <option value="2">2 Níveis (Página inicial + links diretos)</option>
+                            <option value="3" selected>3 Níveis (Padrão recomendado)</option>
+                            <option value="5">5 Níveis (Varredura profunda)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="maxPagesInput" class="form-label">Limite Máximo de Páginas</label>
+                        <input
+                            type="number"
+                            id="maxPagesInput"
+                            name="max_pages"
+                            min="1"
+                            max="200"
+                            value="50"
+                            class="form-input font-mono"
+                        >
+                    </div>
+                </div>
+
+                <!-- Autenticação Opcional -->
+                <div class="auth-box">
+                    <div class="flex items-center gap-3">
+                        <input
+                            type="checkbox"
+                            id="authToggle"
+                            name="auth_enabled"
+                            class="auth-checkbox"
+                        >
+                        <label for="authToggle" class="text-sm font-bold text-white cursor-pointer select-none">
+                            🔐 Esta aplicação requer login de acesso?
+                        </label>
+                    </div>
+
+                    <div id="authFieldsContainer" class="hidden space-y-3 pt-3">
+                        <p class="text-xs text-muted">
+                            As credenciais abaixo são utilizadas <strong>exclusivamente na memória RAM</strong> durante a sessão de teste e nunca são armazenadas no banco de dados.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label for="authLoginUrl" class="form-sublabel">URL de Login (Opcional)</label>
+                                <input type="url" id="authLoginUrl" name="auth_login_url" placeholder="/login" class="form-input text-xs font-mono">
+                            </div>
+                            <div>
+                                <label for="authUsername" class="form-sublabel">Usuário / E-mail</label>
+                                <input type="text" id="authUsername" name="auth_username" placeholder="admin" class="form-input text-xs font-mono">
+                            </div>
+                            <div>
+                                <label for="authPassword" class="form-sublabel">Senha</label>
+                                <input type="password" id="authPassword" name="auth_password" placeholder="••••••••" class="form-input text-xs font-mono">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botão de Iniciar -->
+                <div class="flex justify-end pt-2">
+                    <button type="submit" id="startScanBtn" class="btn-primary">
+                        <span>🚀</span> Iniciar Varredura
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =======================================================================
+         GUIA 2: STATUS DA VARREDURA (Acompanhamento em Tempo Real)
+         ======================================================================= -->
+    <div id="tabStatusContent" class="hidden space-y-6">
+
+        <!-- Mensagem de Nenhuma Varredura Ativa -->
+        <div id="noActiveScanBox" class="card text-center py-12 space-y-3">
+            <span style="font-size: 2.5rem;">💤</span>
+            <h4 class="text-base font-bold text-white">Nenhuma varredura em andamento no momento</h4>
+            <p class="text-xs text-muted max-w-md mx-auto">
+                Para iniciar uma nova análise de segurança e acompanhar em tempo real, acesse a guia <strong>Varredura</strong>.
+            </p>
+            <div class="pt-2">
+                <button type="button" id="goToVarreduraBtn" class="btn-secondary">
+                    <span>🔍</span> Ir para a Guia Varredura
+                </button>
+            </div>
+        </div>
+
+        <!-- Painel de Status em Tempo Real (Visível quando há varredura ativa ou recente) -->
+        <div id="activeScanPanel" class="hidden space-y-6">
+
+            <!-- Card de Progresso e Controle -->
+            <div class="card space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="scanStatusBadge" class="status-badge status-running">Executando</span>
+                            <span class="text-sm font-bold text-white" id="scanTargetDisplay">http://...</span>
+                        </div>
+                        <p class="text-xs text-muted mt-1" id="scanTimeDisplay">Varredura iniciada recentemente</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="stopScanBtn" class="btn-danger hidden">
+                            <span>⏹️</span> Interromper Varredura
+                        </button>
+                        <button type="button" id="statusExportJsonBtn" class="btn-secondary">Exportar JSON</button>
+                        <button type="button" id="statusExportCsvBtn" class="btn-secondary">Exportar CSV</button>
+                    </div>
+                </div>
+
+                <!-- Alertas de Autenticação no Alvo (Login) -->
+                <div id="authAlertBox" class="hidden" style="border-radius: 0.75rem; padding: 1rem 1.25rem; border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.12); border: 1.5px solid rgba(239, 68, 68, 0.4);">
+                    <div class="flex items-start gap-3">
+                        <span style="font-size: 1.4rem; line-height: 1;">⚠️</span>
+                        <div>
+                            <h5 class="text-sm font-bold text-white flex items-center gap-2">
+                                <span>Aviso: Falha na Autenticação do Site</span>
+                                <span class="badge-critical" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Login Rejeitado</span>
+                            </h5>
+                            <p class="text-xs text-secondary mt-1" id="authAlertMessage">
+                                Não foi possível realizar o login com o usuário e senha informados. A varredura prosseguirá mapeando as páginas públicas da aplicação.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="authSuccessBox" class="hidden" style="border-radius: 0.75rem; padding: 0.85rem 1.25rem; border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.35);">
+                    <div class="flex items-center gap-2">
+                        <span style="font-size: 1.1rem;">✅</span>
+                        <span class="text-xs font-bold text-emerald" id="authSuccessMessage">
+                            Login realizado com sucesso! Rastreando rotas autenticadas da aplicação.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Barra de Progresso ao Vivo -->
+                <div id="liveProgressWrapper" class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-sky font-bold flex items-center gap-2">
+                            <span class="pulse-dot" style="background: #38bdf8;"></span>
+                            Rastreando agora:
+                        </span>
+                        <span id="currentCrawlingUrl" class="text-secondary font-mono truncate max-w-lg">Iniciando...</span>
+                    </div>
+                    <div class="pipeline-progress-bar">
+                        <div class="pipeline-progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- 4 Contadores Chave de Status -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    <div class="kpi-chip" style="border-left: 4px solid #38bdf8;">
+                        <span class="kpi-chip-label">Páginas Analisadas</span>
+                        <span id="kpiPagesScanned" class="kpi-chip-value text-sky">0</span>
+                    </div>
+                    <div class="kpi-chip" style="border-left: 4px solid #ef4444;">
+                        <span class="kpi-chip-label">Segredos Críticos</span>
+                        <span id="kpiCriticalCount" class="kpi-chip-value text-rose">0</span>
+                    </div>
+                    <div class="kpi-chip" style="border-left: 4px solid #f97316;">
+                        <span class="kpi-chip-label">Segredos Altos</span>
+                        <span id="kpiHighCount" class="kpi-chip-value text-amber">0</span>
+                    </div>
+                    <div class="kpi-chip" style="border-left: 4px solid #10b981;">
+                        <span class="kpi-chip-label">Total de Segredos</span>
+                        <span id="kpiSecretsFound" class="kpi-chip-value text-white">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Segredos Encontrados em Tempo Real -->
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div class="card-header-clean" style="padding: 1rem 1.25rem;">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>🔍</span> Segredos Detectados em Tempo Real
+                        <span id="realtimeSecretsBadge" class="badge-critical" style="font-size: 0.75rem; padding: 0.15rem 0.5rem;">0</span>
+                    </h3>
+                </div>
+
+                <div class="table-wrapper" style="border: none; border-radius: 0;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 130px;">Severidade</th>
+                                <th style="width: 320px;">Tipo & Valor da Chave</th>
+                                <th>Localização (URL)</th>
+                                <th style="width: 110px;">Origem</th>
+                                <th style="width: 130px; text-align: right;">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="findingsTableBody">
+                            <tr id="emptyFindingsRow">
+                                <td colspan="5" style="padding: 2.5rem; text-align: center; color: #94a3b8;">
+                                    Nenhuma credencial exposta detectada até o momento.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =======================================================================
+         GUIA 3: HISTÓRICO (Histórico das Varreduras + Detalhes Inline)
+         ======================================================================= -->
+    <div id="tabHistoricoContent" class="hidden space-y-6">
+
+        <!-- Tabela com Histórico das Varreduras -->
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <div class="card-header-clean" style="padding: 1rem 1.25rem;">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <span>📑</span> Histórico de Varreduras
+                </h3>
+                <p class="text-xs text-muted">Selecione uma análise clicando em <strong>Visualizar</strong> para abrir os detalhes logo abaixo.</p>
+            </div>
+
+            <div class="table-wrapper" style="border: none; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">ID</th>
+                            <th>Aplicação Auditada</th>
+                            <th style="width: 130px;">Status</th>
+                            <th style="width: 100px;">Páginas</th>
+                            <th style="width: 120px;">Segredos</th>
+                            <th style="width: 180px;">Data/Hora</th>
+                            <th style="width: 130px; text-align: right;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="7" style="padding: 2rem; text-align: center; color: #94a3b8;">
+                                Carregando histórico...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Painel de Detalhes da Varredura Selecionada (Abre logo abaixo da tabela de histórico) -->
+        <div id="historyDetailsPanel" class="hidden card space-y-4" style="border: 1.5px solid #38bdf8; padding: 1.25rem;">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-sky" id="detailScanId">Varredura #0</span>
+                        <span class="text-sm font-bold text-white" id="detailScanTarget">http://...</span>
+                    </div>
+                    <p class="text-xs text-muted mt-1" id="detailScanMeta">0 páginas analisadas &bull; 0 segredos detectados</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" id="historyExportJsonBtn" class="btn-secondary">Exportar JSON</button>
+                    <button type="button" id="historyExportCsvBtn" class="btn-secondary">Exportar CSV</button>
+                    <button type="button" id="closeHistoryDetailsBtn" class="btn-secondary" title="Fechar visualização de detalhes">
+                        Fechar &times;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alertas de Autenticação no Histórico -->
+            <div id="detailAuthAlertBox" class="hidden" style="border-radius: 0.65rem; padding: 0.75rem 1rem; border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.12); border: 1.5px solid rgba(239, 68, 68, 0.35);">
+                <span class="text-xs font-bold text-rose" id="detailAuthAlertMsg">⚠️ Atenção: A autenticação com usuário e senha falhou nesta varredura.</span>
+            </div>
+            <div id="detailAuthSuccessBox" class="hidden" style="border-radius: 0.65rem; padding: 0.65rem 1rem; border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.35);">
+                <span class="text-xs font-bold text-emerald">✅ Varredura realizada com sessão autenticada.</span>
+            </div>
+
+            <!-- Tabela com os Detalhes da Análise Selecionada -->
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 130px;">Severidade</th>
+                            <th style="width: 320px;">Tipo & Valor da Chave</th>
+                            <th>Localização (URL)</th>
+                            <th style="width: 110px;">Origem</th>
+                            <th style="width: 130px; text-align: right;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyDetailsTableBody">
+                        <tr>
+                            <td colspan="5" style="padding: 2rem; text-align: center; color: #94a3b8;">
+                                Selecione uma varredura para visualizar seus segredos.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===========================================================================
+     Modal de Detalhes do Trecho do Segredo (Exibição em Tela & Cópia)
+     =========================================================================== -->
+<div id="snippetModal" class="modal-overlay hidden">
+    <div class="modal-card space-y-4">
+        <div class="flex items-center justify-between border-b pb-3" style="border-color: #1e293b;">
+            <h4 class="text-base font-bold text-white flex items-center gap-2">
+                <span>🔍</span> Detalhes da Descoberta de Segurança
+            </h4>
+            <button type="button" id="closeModalBtn" class="btn-link text-xl text-muted hover:text-white" style="padding: 0; line-height: 1;">&times;</button>
+        </div>
+
+        <div>
+            <p class="text-xs font-bold text-secondary uppercase tracking-wider mb-1">Localização (URL):</p>
+            <p id="modalUrl" class="text-xs font-mono text-sky break-all p-3 rounded-lg" style="background: #060911; border: 1px solid #1e293b;"></p>
+        </div>
+
+        <div id="modalRawSecretBox" class="hidden">
+            <p class="text-xs font-bold text-secondary uppercase tracking-wider mb-1">Segredo Completo (Visualização em Tela):</p>
+            <div class="flex items-center gap-2">
+                <input type="text" id="modalRawSecretVal" readonly class="text-xs font-mono text-rose font-bold p-3 rounded-lg w-full select-all" style="background: #060911; border: 1.5px solid rgba(239, 68, 68, 0.5);">
+                <button type="button" id="modalCopySecretBtn" class="btn-secondary whitespace-nowrap">Copiar</button>
+            </div>
+        </div>
+
+        <div>
+            <p class="text-xs font-bold text-secondary uppercase tracking-wider mb-1">Trecho do Código Higienizado:</p>
+            <pre id="modalSnippet" class="text-xs font-mono text-primary p-3 rounded-lg overflow-x-auto whitespace-pre-wrap" style="background: #060911; border: 1px solid #1e293b; max-height: 250px; line-height: 1.5;"></pre>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t" style="border-color: #1e293b;">
+            <button type="button" id="modalCloseActionBtn" class="btn-secondary">Fechar Janela</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

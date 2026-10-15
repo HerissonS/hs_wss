@@ -1,0 +1,24 @@
+# ==============================================================================
+# HS_WSS - HS Tech Web Secret Scanner Docker Compose
+# Ephemeral execution bound to terminal session (foreground mode)
+# ==============================================================================
+services:
+  hs_wss:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hs_wss_scanner
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-8659}:${PORT:-8659}"
+    volumes:
+      - ./data:/opt/hs_wss/data
+      - ./app:/opt/hs_wss/app
+    restart: "no"
+    init: true
+    shm_size: "1gb"
+    security_opt:
+      - no-new-privileges:true
+    stdin_open: true
+    tty: true

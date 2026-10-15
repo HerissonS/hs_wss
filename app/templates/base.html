@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}HS_WSS | Web Secret Scanner & Pipeline{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.66 0 3 1.34 3 3 0 1.13-.64 2.11-1.56 2.62l1.06 4.38h-5l1.06-4.38C9.64 12.11 9 11.13 9 10c0-1.66 1.34-3 3-3z'/></svg>">
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+    <!-- Modern Top Navigation Bar -->
+    <header style="background: #090e1a; border-bottom: 1.5px solid #1e293b;">
+        <div class="container flex items-center justify-between" style="padding-top: 1rem; padding-bottom: 1rem;">
+            <div class="flex items-center gap-3">
+                <div style="width: 2.4rem; height: 2.4rem; border-radius: 0.625rem; background: rgba(56, 189, 248, 0.15); border: 1.5px solid rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    🛡️
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg font-bold text-white tracking-tight">HS_WSS</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35);">
+                            DevSecOps
+                        </span>
+                    </div>
+                    <p class="text-xs text-muted" style="margin-top: 2px;">Web Secret Scanner &bull; Esteira de Inspeção</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="connectionStatusBadge" class="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full" style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1.5px solid rgba(16, 185, 129, 0.35);">
+                    <span class="pulse-dot" style="background: #34d399;"></span> Conectado
+                </div>
+                <div class="text-xs font-mono font-semibold px-3 py-1.5 rounded-full" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1.5px solid rgba(245, 158, 11, 0.3);">
+                    ⚡ Execução Efêmera
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer style="border-top: 1.5px solid #1e293b; background: #060911; padding: 1.5rem 0; font-size: 0.875rem; color: #94a3b8; text-align: center;">
+        <div class="container flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p><strong class="text-white">HS_WSS</strong> &bull; HS Tech Web Secret Scanner &bull; Secure by Design</p>
+            <p class="font-mono text-xs">Atrelado ao processo do terminal &bull; <kbd style="background: #1e293b; color: #f1f5f9; padding: 2px 6px; border-radius: 4px;">Ctrl+C</kbd> encerra a sessão</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Core Web API & Asynchronous Engine
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+
+# Web Automation & Dynamic Interception
+playwright==1.48.0
+
+# Persistence & Database
+sqlalchemy==2.0.35
+
+# Templates & Static Handling
+jinja2==3.1.4
+aiofiles==24.1.0
+
+# Environment Configuration
+python-dotenv==1.0.1
