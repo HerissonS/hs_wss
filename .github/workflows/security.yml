@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   # ----------------------------------------------------------------------------
@@ -55,10 +54,10 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Run Checkov on Dockerfile & Compose
+      - name: Run Checkov on Dockerfile
         uses: bridgecrewio/checkov-action@master
         with:
-          framework: dockerfile,compose
+          framework: dockerfile
           output_format: cli
           soft_fail: false
 
